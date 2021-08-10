@@ -1,0 +1,114 @@
+<script>
+  $("#btnsave").click(function () {
+    // console.log("save button clicked");
+
+    let stuid = $("#stuid").val();
+    let name = $("#nameid").val();
+    let email = $("#emailid").val();
+    let password = $("#passwordid").val();
+
+    if (name != "" && email != "" && password != "") {
+      mydata = {
+        csrfmiddlewaretoken: "{{ csrf_token }}",
+        stuid: stuid,
+        name: name,
+        email: email,
+        password: password,
+      };
+
+      $.ajax({
+        url: "/save",
+        method: "POST",
+        data: mydata,
+        success: function (data) {
+          // console.log(data);
+          if (data.status == "success") {
+            // console.log("Form submitted successfully!");
+            $("#msg").text("Form submitted successfully!");
+            $("#msg").show();
+
+            $("#stuid").val("");
+            $("form")[0].reset();
+            let students_data = data.students_data;
+            let rows = ``;
+
+            students_data.map(
+              (student) =>
+                (rows += `<tr>
+                <td>${student.id}</td>
+                <td>${student.name}</td>
+                <th>${student.email}</th>
+                <th>${student.password}</th>
+                <th>
+                  <input
+                    type="button"
+                    class="btn btn-warning btn-sm btn-edit"
+                    data-sid="${student.id}"
+                    value="Edit"
+                  />
+                  <input
+                    type="button"
+                    class="btn btn-danger btn-sm btn-del"
+                    data-sid="${student.id}"
+                    value="delete"
+                  />
+                </th>
+              </tr>`)
+            );
+
+            $("tbody").html(rows);
+          } else {
+            // console.log(data.status);
+            $("#msg").text(data.status);
+            $("#msg").show();
+          }
+        },
+      });
+    }
+  });
+
+  // Delete data
+  $("tbody").on("click", ".btn-del", function () {
+    // console.log("Delete button clicked");
+    let id = $(this).attr("data-sid");
+    // console.log(id);
+    mydata = { csrfmiddlewaretoken: "{{ csrf_token }}", id: id };
+    mythis = this;
+
+    $.ajax({
+      url: "/delete",
+      method: "POST",
+      data: mydata,
+      success: function (data) {
+        // console.log(data);
+        if (data.status == "deleted") {
+          $(mythis).closest("tr").fadeOut();
+          $("#msg").text("Deleted successfully!");
+          $("#msg").show();
+        }
+      },
+    });
+  });
+
+  // Edit data
+  $("tbody").on("click", ".btn-edit", function () {
+    // console.log("Edit button clicked");
+    let id = $(this).attr("data-sid");
+    // console.log(id);
+    mydata = { csrfmiddlewaretoken: "{{ csrf_token }}", id: id };
+    mythis = this;
+
+    $.ajax({
+      url: "/edit",
+      method: "POST",
+      data: mydata,
+      success: function (data) {
+        // console.log(data);
+        $("#stuid").val(data.id);
+        $("#nameid").val(data.name);
+        $("#emailid").val(data.email);
+        $("#passwordid").val(data.password);
+      },
+    });
+  });
+</script>
